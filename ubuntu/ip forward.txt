@@ -1,0 +1,1 @@
+编辑/etc/sysctl.conf文件，将net.ipv4.ip_forward=1前面的#注释去掉，保存文件，然后执行sudo sysctl -p使其生效
