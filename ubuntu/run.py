@@ -5,19 +5,22 @@ This module builds on BaseHTTPServer by implementing the standard GET
 and HEAD requests in a fairly straightforward manner.
 """
 
-__version__ = "0.1"
+__version__ = "1.01"
 __all__ = ["SimpleHTTPRequestHandler"]
-__author__ = "bones7456"
-__home_page__ = "http://li2z.cn/"
+__author__ = "awei.tian"
+__home_page__ = "http://github.com/aweitian"
 
-import os
-import posixpath
-import BaseHTTPServer
-import urllib
-import cgi
-import shutil
-import mimetypes
-import re
+try:
+    import sys
+    import os
+    import re
+    import subprocess
+    import BaseHTTPServer
+    import json
+except ImportError as e:
+    # should never be reached
+    print ("[f] Required module missing. %s" % e.args[0])
+    sys.exit(-1)
 
 try:
     from cStringIO import StringIO
@@ -47,10 +50,24 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         print "POST"
         path = self.translate_path(self.path)
         if path == "/run":
-            self.send_response(200)
+            cmd = self.rfile.read(int(self.headers['content-length']))
+            # r = os.popen(cmd)
+            # request = json.loads()
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            # print "stdout: '%s'" % stdout
+            # print "stderr: '%s'" % stderr
+            if stderr != "":
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write("Error" + stderr)
+            else:
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(stdout)
+
             # self.send_header("Welcome", "Contect")
-            self.end_headers()
-            self.wfile.write(self.rfile.read(int(self.headers['content-length'])))
+
         else:
             self.send_response(404)
             # self.send_header("Welcome", "Contect")
@@ -69,10 +86,5 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return path
 
 
-
-def test(HandlerClass=SimpleHTTPRequestHandler, ServerClass=BaseHTTPServer.HTTPServer):
-    BaseHTTPServer.test(HandlerClass, ServerClass)
-
-
 if __name__ == '__main__':
-    test()
+    BaseHTTPServer.test(SimpleHTTPRequestHandler, BaseHTTPServer)
