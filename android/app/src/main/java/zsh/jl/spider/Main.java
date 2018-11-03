@@ -1,5 +1,6 @@
 package zsh.jl.spider;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.hardware.input.InputManager;
@@ -7,6 +8,7 @@ import android.os.Build;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.support.v4.view.InputDeviceCompat;
+import android.util.Log;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -21,7 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Method;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import android.os.Process;
 
 public class Main {
 
@@ -32,6 +34,7 @@ public class Main {
     private static final String KEY_CHANGE_SIZE = "change_size";
     private static final String KEY_BEATHEART = "beatheart";
     private static final String KEY_SEND = "key_press";
+    private static final String PASTE_STR = "send_txt";
     //    private static final String KEY_RUN_SHELL = "run_shell";
     private static final String KEY_EVENT_TYPE = "type";
     private static InputManager sInputManager;
@@ -51,6 +54,7 @@ public class Main {
         System.out.println("PhoneController start...");
         sTimer = new Timer();
         try {
+            Log.d("Garri","Main::My pid is" + Process.myPid());
             sInputManager = (InputManager) InputManager.class.getDeclaredMethod("getInstance").invoke(null);
             sInjectInputEventMethod = InputManager.class.getMethod("injectInputEvent", InputEvent.class, Integer.TYPE);
             AsyncHttpServer httpServer = new AsyncHttpServer();
@@ -78,6 +82,7 @@ public class Main {
                             JSONObject event = new JSONObject(s);
                             String eventType = event.getString(KEY_EVENT_TYPE);
                             int code = 0;
+                            String txt;
                             switch (eventType) {
                                 case KEY_FINGER_DOWN:
                                     float x = event.getInt("x") * (BASE_WIDTH / sPictureWidth);
@@ -102,13 +107,18 @@ public class Main {
                                     break;
                                 case KEY_SEND:
                                     code = event.getInt("code");
-                                    injectKeyEvent(257,code,false);
+                                    injectKeyEvent(257, code, false);
                                     break;
                                 case KEY_CHANGE_SIZE:
                                     sPictureWidth = event.getInt("w");
                                     sPictureHeight = event.getInt("h");
                                     sRotate = event.getInt("r");
                                     break;
+                                case PASTE_STR:
+                                    txt = event.getString("content");
+                                    System.out.print(txt);
+                                    Intent intent = new Intent("com.example.mu16jj.broadcastreceiver");
+//                                    sendBroadcast();
                             }
                         } catch (Exception e) {
                             System.out.println(e.getMessage());
@@ -184,7 +194,7 @@ public class Main {
         }
     }
 
-    private static void injectKeyEvent(int inputSource, int code,boolean b) {
+    private static void injectKeyEvent(int inputSource, int code, boolean b) {
         try {
             final long uptimeMillis = SystemClock.uptimeMillis();
             KeyEvent event = new KeyEvent(uptimeMillis, uptimeMillis, 0, code, 0, (b ? 1 : 0), -1, 0, 0, inputSource);

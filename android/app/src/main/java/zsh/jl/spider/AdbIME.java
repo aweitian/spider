@@ -1,28 +1,40 @@
 package zsh.jl.spider;
 
+import android.os.Process;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.inputmethodservice.InputMethodService;
+import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
+import android.widget.Toast;
 
 public class AdbIME extends InputMethodService {
+//    public static AdbIME instance;
     private String IME_MESSAGE = "ADB_INPUT_TEXT";
     private String IME_CHARS = "ADB_INPUT_CHARS";
     private String IME_KEYCODE = "ADB_INPUT_CODE";
     private String IME_EDITORCODE = "ADB_EDITOR_CODE";
     private String IME_MESSAGE_B64 = "ADB_INPUT_B64";
     private BroadcastReceiver mReceiver = null;
+//
+//    public AdbIME() {
+//        AdbIME.instance = this;
+//}
 
     @Override
     public View onCreateInputView() {
         View mInputView = getLayoutInflater().inflate(R.layout.view, null);
-
+        Log.d("Garri","AdbIME::onCreateInputView");
+        int pid = Process.myPid();
+        Log.d("Garri","AdbIME::my pid is:" + pid);
+//        AdbIME.instance = this;
+//        System.out.print("onCreateInputView");
         if (mReceiver == null) {
             IntentFilter filter = new IntentFilter(IME_MESSAGE);
             filter.addAction(IME_CHARS);
@@ -32,15 +44,28 @@ public class AdbIME extends InputMethodService {
             mReceiver = new AdbReceiver();
             registerReceiver(mReceiver, filter);
         }
-
+        Toast.makeText(getApplicationContext(), "AdbIME", Toast.LENGTH_SHORT).show();
         return mInputView;
     }
 
     public void onDestroy() {
-        if (mReceiver != null)
-            unregisterReceiver(mReceiver);
+//        if (mReceiver != null)
+//            unregisterReceiver(mReceiver);
         super.onDestroy();
     }
+
+//    public void setText(String text) {
+//        InputConnection ic = getCurrentInputConnection();
+//        if (ic != null) {
+//            if (ic.commitText(text, 1)) {
+//                System.out.print("IC commit ok");
+//            } else {
+//                System.out.print("IC commit fail");
+//            }
+//        } else {
+//            System.out.print("IC is null");
+//        }
+//    }
 
     class AdbReceiver extends BroadcastReceiver {
         @Override
